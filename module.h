@@ -12,6 +12,7 @@
 #include <vector>
 #include <string>
 #include <string_view>
+#include <utility>
 
 namespace DynLibUtils {
 
@@ -21,8 +22,10 @@ public:
 	struct ModuleSections_t
 	{
 		ModuleSections_t() : m_nSectionSize(0) {}
-		ModuleSections_t(const std::string_view svSectionName, uintptr_t pSectionBase, size_t nSectionSize) :
-			m_svSectionName(svSectionName), m_pSectionBase(pSectionBase), m_nSectionSize(nSectionSize) {}
+		ModuleSections_t(const ModuleSections_t&) = default;
+		ModuleSections_t& operator= (const ModuleSections_t&) = default;
+		ModuleSections_t(ModuleSections_t&& other) noexcept : m_svSectionName(std::move(other.m_svSectionName)), m_pSectionBase(std::move(other.m_pSectionBase)), m_nSectionSize(std::exchange(other.m_nSectionSize, 0)) {}
+		ModuleSections_t(const std::string_view svSectionName, uintptr_t pSectionBase, size_t nSectionSize) : m_svSectionName(svSectionName), m_pSectionBase(pSectionBase), m_nSectionSize(nSectionSize) {}
 
 		[[nodiscard]] inline bool IsSectionValid() const noexcept
 		{
@@ -38,9 +41,10 @@ public:
 	~CModule();
 	CModule (const CModule&) = delete;
 	CModule& operator= (const CModule&) = delete;
+	CModule(CModule&& other) noexcept : m_ExecutableCode(std::move(other.m_ExecutableCode)), m_sModulePath(std::move(other.m_sModulePath)), m_pModuleHandle(std::exchange(other.m_pModuleHandle, nullptr)), m_vModuleSections(std::move(other.m_vModuleSections)) {}
 	explicit CModule(const std::string_view svModuleName);
-	explicit CModule(const char* pszModuleName) : CModule(std::string_view(pszModuleName)) {};
-	explicit CModule(const std::string& sModuleName) : CModule(std::string_view(sModuleName)) {};
+	explicit CModule(const char* pszModuleName) : CModule(std::string_view(pszModuleName)) {}
+	explicit CModule(const std::string& sModuleName) : CModule(std::string_view(sModuleName)) {}
 	CModule(const CMemory pModuleMemory);
 
 	bool InitFromName(const std::string_view svModuleName, bool bExtension = false);

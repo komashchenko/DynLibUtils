@@ -10,6 +10,7 @@
 
 #include <cstdint>
 #include <cstddef>
+#include <utility>
 
 namespace DynLibUtils {
 
@@ -17,6 +18,9 @@ class CMemory
 {
 public:
 	CMemory() : m_ptr(0) {}
+	CMemory(const CMemory&) noexcept = default;
+	CMemory& operator= (const CMemory&) noexcept = default;
+	CMemory(CMemory&& other) noexcept : m_ptr(std::exchange(other.m_ptr, 0)) {}
 	CMemory(const uintptr_t ptr) : m_ptr(ptr) {}
 	CMemory(const void* ptr) : m_ptr(reinterpret_cast<uintptr_t>(ptr)) {}
 
